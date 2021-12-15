@@ -52,7 +52,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\BrightnessAdjustment.cs" />
+    <Compile Include="Commands\TemperatureAdjustment.cs" />
     <Compile Include="Commands\ToggleCommand.cs" />
+    <Compile Include="Helpers\RangeHelper.cs" />
     <Compile Include="KeyLightClient.cs" />
     <Compile Include="KeyLightModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

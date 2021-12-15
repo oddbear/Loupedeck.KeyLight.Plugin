@@ -1,25 +1,83 @@
 namespace Loupedeck.KeyLightPlugin
 {
     using System;
+    using System.Diagnostics;
+    using System.Linq;
     using System.Net.Http;
+    using System.Threading;
+
+    using Commands;
 
     public class KeyLightPlugin : Plugin
     {
-        private HttpClient _httpClient;
-        internal KeyLightClient KeyLightClient { get; private set;  }
+        private readonly HttpClient _httpClient;
+        internal KeyLightClient KeyLightClient { get; }
+        private readonly Thread _refreshThread;
 
-        public override void Load()
+        public KeyLightPlugin()
         {
-            //TODO: Brightness adjustment
-            //TODO: Warmth Adjustment
             this._httpClient = new HttpClient();
             this.KeyLightClient = new KeyLightClient(this._httpClient);
+            this._refreshThread = new Thread(this.RefreshKeyLightInfo) { IsBackground = true };
+        }
+        
+        private void RefreshKeyLightInfo()
+        {
+            var toggleCommand = base.DynamicCommands
+                .OfType<ToggleCommand>()
+                .Single();
+
+            var brightnessAdjustment = base.DynamicAdjustments
+                .OfType<BrightnessAdjustment>()
+                .Single();
+
+            var temperatureAdjustment = base.DynamicAdjustments
+                .OfType<TemperatureAdjustment>()
+                .Single();
+
+            //Control Center refreshes lights, and accessory info each second (unordered, as in parallel?) if it's opened.
+            while (true)
+            {
+                try
+                {
+                    //Loaded after BrightnessAdjustment, need to init in constructor.
+                    var lights = this.KeyLightClient
+                        .GetLights(CancellationToken.None)
+                        .GetAwaiter()
+                        .GetResult();
+
+                    var lightState = lights.Lights
+                        .FirstOrDefault()
+                        ?.On ?? LightState.Unknown;
+                    
+                    var brightness = lights.Lights
+                        .FirstOrDefault()
+                        ?.Brightness ?? 0;
+
+                    var temperature = lights.Lights
+                        .FirstOrDefault()
+                        ?.Temperature ?? 0;
+
+                    toggleCommand.SetState(lightState);
+
+                    brightnessAdjustment.SetBrightness(brightness);
+
+                    temperatureAdjustment.SetTemperature(temperature);
+                }
+                catch (Exception exception)
+                {
+                    Trace.TraceError($"Exception on RefreshThread: {exception}");
+                }
+
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
         }
 
-        public override void Unload()
-        {
+        public override void Load() =>
+            this._refreshThread.Start();
+
+        public override void Unload() =>
             this._httpClient.Dispose();
-        }
 
         private void OnApplicationStarted(Object sender, EventArgs e)
         {

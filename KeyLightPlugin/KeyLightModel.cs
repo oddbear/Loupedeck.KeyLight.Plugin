@@ -28,7 +28,8 @@
 
     enum LightState
     {
-        Off,
-        On
+        Off = 0,
+        On = 1,
+        Unknown = 2
     }
 }

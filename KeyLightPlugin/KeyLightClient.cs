@@ -9,6 +9,8 @@
     using System.Threading;
     using System.Threading.Tasks;
 
+    using Helpers;
+
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
 
@@ -31,8 +33,29 @@
             };
         }
 
+        public async Task SetTemperature(Int32 temperature, CancellationToken cancellationToken)
+        {
+            //Control Center: Min 7000K (143), Max 2900K (344)
+            temperature = RangeHelper.Range(temperature, 143, 344);
+
+            var lights = new KeyLightLightsModel
+            {
+                NumberOfLights = 1,
+                Lights = new[]
+                {
+                    new KeyLightLightModel { Temperature = temperature }
+                }
+            };
+            var json = JsonConvert.SerializeObject(lights, this._serializerSettings);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var responseMessage = await this._httpClient.PutAsync("http://192.168.50.102:9123/elgato/lights", content, cancellationToken);
+        }
+
         public async Task SetBrightness(Int32 brightness, CancellationToken cancellationToken)
         {
+            //Control Center: Min 3, Max 100
+            brightness = RangeHelper.Range(brightness, 3, 100);
+
             var lights = new KeyLightLightsModel
             {
                 NumberOfLights = 1,
@@ -46,17 +69,20 @@
             var responseMessage = await this._httpClient.PutAsync("http://192.168.50.102:9123/elgato/lights", content, cancellationToken);
         }
 
-        public async Task ToggleLight(CancellationToken cancellationToken)
+        public async Task SetLightStatus(LightState lightState, CancellationToken cancellationToken)
         {
-            var lights = await this.GetLights(cancellationToken);
+            if (lightState != LightState.On && lightState != LightState.Off)
+                lightState = LightState.Off;
 
-            foreach (var light in lights.Lights)
+            var lights = new KeyLightLightsModel
             {
-                light.On = light.On == LightState.On
-                    ? LightState.Off
-                    : LightState.On;
-            }
-
+                NumberOfLights = 1,
+                Lights = new[]
+                {
+                    new KeyLightLightModel { On = lightState }
+                }
+            };
+            
             var json = JsonConvert.SerializeObject(lights, this._serializerSettings);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             var responseMessage = await this._httpClient.PutAsync("http://192.168.50.102:9123/elgato/lights", content, cancellationToken);
