@@ -26,6 +26,16 @@
         public String[] Features { get; set; }
     }
 
+    class KeyLightSettings
+    {
+        public Int32 PowerOnBehavior { get; set; }
+        public Int32 PowerOnBrightness { get; set; }
+        public Int32 PowerOnTemperature { get; set; }
+        public Int32 SwitchOnDurationMs { get; set; }
+        public Int32 SwitchOffDurationMs { get; set; }
+        public Int32 ColorChangeDurationMs { get; set; }
+    }
+
     enum LightState
     {
         Off = 0,

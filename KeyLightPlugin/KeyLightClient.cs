@@ -96,6 +96,14 @@
             return JsonConvert.DeserializeObject<KeyLightLightsModel>(json);
         }
 
+        public async Task<KeyLightSettings> GetLightsSettings(CancellationToken cancellationToken)
+        {
+            var responseMessage = await this._httpClient.GetAsync("http://192.168.50.102:9123/elgato/lights/settings", cancellationToken);
+            var json = await responseMessage.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<KeyLightSettings>(json);
+        }
+
         public async Task<KeyLightAccessoryInfo> GetAccessoryInfo(CancellationToken cancellationToken)
         {
             var responseMessage = await this._httpClient.GetAsync("http://192.168.50.102:9123/elgato/accessory-info", cancellationToken);
