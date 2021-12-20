@@ -33,7 +33,7 @@
             };
         }
 
-        public async Task SetTemperature(Int32 temperature, CancellationToken cancellationToken)
+        internal async Task SetTemperature(Int32 temperature, CancellationToken cancellationToken)
         {
             //Control Center: Min 7000K (143), Max 2900K (344)
             temperature = RangeHelper.Range(temperature, 143, 344);
@@ -51,7 +51,7 @@
             var responseMessage = await this._httpClient.PutAsync("http://192.168.50.102:9123/elgato/lights", content, cancellationToken);
         }
 
-        public async Task SetBrightness(Int32 brightness, CancellationToken cancellationToken)
+        internal async Task SetBrightness(String address, Int32 brightness, CancellationToken cancellationToken)
         {
             //Control Center: Min 3, Max 100
             brightness = RangeHelper.Range(brightness, 3, 100);
@@ -66,10 +66,10 @@
             };
             var json = JsonConvert.SerializeObject(lights, this._serializerSettings);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var responseMessage = await this._httpClient.PutAsync("http://192.168.50.102:9123/elgato/lights", content, cancellationToken);
+            var responseMessage = await this._httpClient.PutAsync($"http://{address}:9123/elgato/lights", content, cancellationToken);
         }
 
-        public async Task SetLightStatus(LightState lightState, CancellationToken cancellationToken)
+        internal async Task SetLightStatus(String address, LightState lightState, CancellationToken cancellationToken)
         {
             if (lightState != LightState.On && lightState != LightState.Off)
                 lightState = LightState.Off;
@@ -85,28 +85,28 @@
             
             var json = JsonConvert.SerializeObject(lights, this._serializerSettings);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var responseMessage = await this._httpClient.PutAsync("http://192.168.50.102:9123/elgato/lights", content, cancellationToken);
+            var responseMessage = await this._httpClient.PutAsync($"http://{address}:9123/elgato/lights", content, cancellationToken);
         }
 
-        public async Task<KeyLightLightsModel> GetLights(CancellationToken cancellationToken)
+        internal async Task<KeyLightLightsModel> GetLights(String address, CancellationToken cancellationToken)
         {
-            var responseMessage = await this._httpClient.GetAsync("http://192.168.50.102:9123/elgato/lights", cancellationToken);
+            var responseMessage = await this._httpClient.GetAsync($"http://{address}:9123/elgato/lights", cancellationToken);
             var json = await responseMessage.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<KeyLightLightsModel>(json);
         }
 
-        public async Task<KeyLightSettings> GetLightsSettings(CancellationToken cancellationToken)
+        internal async Task<KeyLightSettings> GetLightsSettings(String address, CancellationToken cancellationToken)
         {
-            var responseMessage = await this._httpClient.GetAsync("http://192.168.50.102:9123/elgato/lights/settings", cancellationToken);
+            var responseMessage = await this._httpClient.GetAsync($"http://{address}:9123/elgato/lights/settings", cancellationToken);
             var json = await responseMessage.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<KeyLightSettings>(json);
         }
 
-        public async Task<KeyLightAccessoryInfo> GetAccessoryInfo(CancellationToken cancellationToken)
+        internal async Task<KeyLightAccessoryInfo> GetAccessoryInfo(String address, CancellationToken cancellationToken)
         {
-            var responseMessage = await this._httpClient.GetAsync("http://192.168.50.102:9123/elgato/accessory-info", cancellationToken);
+            var responseMessage = await this._httpClient.GetAsync($"http://{address}:9123/elgato/accessory-info", cancellationToken);
             var json = await responseMessage.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<KeyLightAccessoryInfo>(json);

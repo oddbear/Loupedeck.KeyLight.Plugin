@@ -309,3 +309,6 @@ testem.log
 *.xcactivitylog
 
 *.DotSettings
+
+# Affinity Photo
+*.afphoto
