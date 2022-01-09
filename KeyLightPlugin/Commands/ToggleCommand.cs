@@ -1,17 +1,15 @@
-﻿namespace Loupedeck.KeyLightPlugin.Commands
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Web.UI;
+﻿using System;
+using System.Linq;
+using System.Threading;
+using Loupedeck.KeyLightPlugin.Models.Enums;
+using Loupedeck.KeyLightPlugin.Services;
 
+namespace Loupedeck.KeyLightPlugin.Commands
+{
     class ToggleCommand : PluginDynamicCommand
     {
-        private LightState _lightState = LightState.Unknown;
         private KeyLightPlugin _plugin;
+        private KeyLightService _keyLightService;
 
         public ToggleCommand()
             : base()
@@ -22,49 +20,57 @@
 
             base.MakeProfileAction("list;Select KeyLight:");
         }
-
-        internal void SetState(KeyLightState state, LightState? lightState)
+        
+        protected override bool OnLoad()
         {
-            if (lightState is null)
-                return;
+            _plugin = base.Plugin as KeyLightPlugin;
+            if (_plugin is null)
+                return false;
 
-            state.State.On = lightState;
+            _keyLightService = _plugin.KeyLightService;
+            if (_keyLightService is null)
+                return false;
 
-            base.ActionImageChanged();
-        }
+            _plugin.StateUpdatedEvents += (sender, e) => base.ActionImageChanged(e.Id);
 
-        protected override Boolean OnLoad()
-        {
-            this._plugin = (KeyLightPlugin)base.Plugin;
             return true;
         }
         
-        protected override void RunCommand(String actionParameter)
+        protected override void RunCommand(string actionParameter)
         {
-            if(!this._plugin.KeyLights.TryGetValue(actionParameter, out var value))
+            var (address, light) = _plugin.GetKeyLight(actionParameter);
+            if (address is null || light is null)
                 return;
 
-            var lightState = value.State.On == LightState.On
-                ? LightState.Off
-                : LightState.On;
+            try
+            {
+                var lightState = light.On == LightState.On
+                    ? LightState.Off
+                    : LightState.On;
 
-            this.SetState(value, lightState);
+                var cancellationToken = CancellationToken.None;
+                _keyLightService.SetLightStatus(address, lightState, cancellationToken);
 
-            //TODO: What happens if exceptions etc.?
-            var keyLightClient = this._plugin.KeyLightClient;
-            keyLightClient.SetLightStatus(value.Address, lightState, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+                light.On = lightState;
+                base.ActionImageChanged(actionParameter);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e); //TODO: Add proper logging
+            }
         }
 
         protected override PluginActionParameter[] GetParameters() =>
-            this._plugin.KeyLights
-                .Select(kv => kv.Value)
-                .Select(keyLight => new PluginActionParameter(keyLight.Id, keyLight.Name, String.Empty))
+            _plugin.KeyLights
+                .Select(keyLight => new PluginActionParameter(keyLight.Key, keyLight.Value.Name, string.Empty))
                 .ToArray();
 
         protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
         {
+            var (_, light) = _plugin.GetKeyLight(actionParameter);
+            if (light is null)
+                return null;
+
             using (var bitmapBuilder = new BitmapBuilder(imageSize))
             {
                 bitmapBuilder.Clear(BitmapColor.Black);
@@ -72,10 +78,10 @@
                 var text = "-";
                 var state = LightState.Off;
 
-                if (this._plugin.KeyLights.TryGetValue(actionParameter, out var value))
+                if (_plugin.KeyLights.TryGetValue(actionParameter, out var value))
                 {
-                    state = value.State?.On ?? LightState.Off;
-                    text = value.State.On?.ToString() ?? "-";
+                    state = light.On ?? LightState.Off;
+                    text = light.On?.ToString() ?? "-";
                 }
 
                 if (imageSize == PluginImageSize.Width60)

@@ -1,61 +1,85 @@
-﻿//namespace Loupedeck.KeyLightPlugin.Commands
-//{
-//    using System;
-//    using System.Threading;
+﻿using System;
+using System.Linq;
+using System.Threading;
+using Loupedeck.KeyLightPlugin.Helpers;
+using Loupedeck.KeyLightPlugin.Services;
 
-//    using Helpers;
+namespace Loupedeck.KeyLightPlugin.Commands
+{
+    class TemperatureAdjustment : PluginDynamicAdjustment
+    {
+        private KeyLightPlugin _plugin;
+        private KeyLightService _keyLightService;
 
-//    class TemperatureAdjustment : PluginDynamicAdjustment
-//    {
-//        private Int32 _temperature;
-//        private KeyLightPlugin _plugin;
+        public TemperatureAdjustment()
+            : base(false)
+        {
+            base.DisplayName = "Adjust temperature";
+            base.GroupName = "";
+            base.Description = "Adjusts the temperature";
 
-//        public TemperatureAdjustment()
-//            : base("Adjust temperature", "Adjusts the temperature", "KeyLight", true)
-//        {
-//            //
-//        }
-
-//        internal void SetTemperature(Int32? temperature)
-//        {
-//            if (temperature is null)
-//                return;
-            
-//            //Current: 278
-//            //Control Center: Min 7000K (143), Max 2900K (344)
-//            this._temperature = RangeHelper.Range(temperature.Value, 143, 344);
-
-//            this.AdjustmentValueChanged();
-//        }
-
-//        protected override Boolean OnLoad()
-//        {
-//            this._plugin = (KeyLightPlugin)base.Plugin;
-//            return true;
-//        }
-
-//        protected override void ApplyAdjustment(String actionParameter, Int32 ticks)
-//        {
-//            var value = this._temperature + ticks;
-
-//            //TODO: What happens if exceptions etc.?
-//            this.SetTemperature(value);
-
-//            var keyLightClient = this._plugin.KeyLightClient;
-//            keyLightClient.SetTemperature(value, CancellationToken.None)
-//                .GetAwaiter()
-//                .GetResult();
-//        }
+            base.MakeProfileAction("list;Select KeyLight:");
+        }
         
-//        protected override String GetAdjustmentValue(String actionParameter) =>
-//            $"{this.ToKelvin(this._temperature)}K";
+        protected override bool OnLoad()
+        {
+            _plugin = base.Plugin as KeyLightPlugin;
+            if (_plugin is null)
+                return false;
 
-//        private Int32 ToKelvin(Int32 x)
-//        {
-//            //Approximation (off by ~ 50-150K):
-//            var ticks = 0.0900835 * x * x - 63.5864 * x + 14177.3;
+            _keyLightService = _plugin.KeyLightService;
+            if (_keyLightService is null)
+                return false;
 
-//            return (Int32)(Math.Round(ticks / 50.0) * 50.0);
-//        }
-//    }
-//}
+            _plugin.TemperatureUpdatedEvents += (sender, e) => base.ActionImageChanged(e.Id);
+
+            return true;
+        }
+
+        protected override void ApplyAdjustment(string actionParameter, int ticks)
+        {
+            var (address, light) = _plugin.GetKeyLight(actionParameter);
+            if (address is null || light is null)
+                return;
+
+            try
+            {
+                if (light.Temperature is null)
+                    return;
+
+                //Current: 278
+                //Control Center: Min 7000K (143), Max 2900K (344)
+                var temperature = RangeHelper.Range(light.Temperature.Value + ticks, 143, 344);
+                light.Temperature = temperature;
+                
+                base.ActionImageChanged(actionParameter);
+
+                var cancellationToken = CancellationToken.None;
+                _keyLightService.SetTemperature(address, temperature, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e); //TODO: Add proper logging
+                throw;
+            }
+        }
+
+        protected override string GetAdjustmentValue(string actionParameter)
+        {
+            var (_, light) = _plugin.GetKeyLight(actionParameter);
+            if (light is null)
+                return null;
+            
+            var temperature = light.Temperature;
+
+            return temperature is null
+                ? null
+                : $"{RangeHelper.ToKelvin(temperature.Value)}K";
+        }
+
+        protected override PluginActionParameter[] GetParameters() =>
+            _plugin.KeyLights
+                .Select(keyLight => new PluginActionParameter(keyLight.Key, keyLight.Value.Name, string.Empty))
+                .ToArray();
+    }
+}

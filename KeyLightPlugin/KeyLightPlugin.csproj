@@ -74,8 +74,17 @@
     <Compile Include="Commands\TemperatureAdjustment.cs" />
     <Compile Include="Commands\ToggleCommand.cs" />
     <Compile Include="Helpers\RangeHelper.cs" />
-    <Compile Include="KeyLightClient.cs" />
-    <Compile Include="KeyLightModel.cs" />
+    <Compile Include="Models\Enums\LightState.cs" />
+    <Compile Include="Models\Events\BrightnessUpdatedEventArgs.cs" />
+    <Compile Include="Models\Events\LightUpdatedEventArgs.cs" />
+    <Compile Include="Models\Events\StateUpdatedEventArgs.cs" />
+    <Compile Include="Models\Events\TemperatureUpdatedEventArgs.cs" />
+    <Compile Include="Models\Json\KeyLightAccessoryInfo.cs" />
+    <Compile Include="Services\KeyLightService.cs" />
+    <Compile Include="Models\DiscoveredKeyLight.cs" />
+    <Compile Include="Models\Json\KeyLightLightModel.cs" />
+    <Compile Include="Models\Json\KeyLightLightsModel.cs" />
+    <Compile Include="Models\Json\KeyLightSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="KeyLightApplication.cs" />
     <Compile Include="KeyLightPlugin.cs" />
@@ -109,5 +118,6 @@
     <EmbeddedResource Include="Resources\KeyLight\brightness015-50.png" />
     <EmbeddedResource Include="Resources\KeyLight\brightness030-50.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
