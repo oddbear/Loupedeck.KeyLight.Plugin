@@ -81,5 +81,38 @@ namespace Loupedeck.KeyLightPlugin.Commands
             _plugin.KeyLights
                 .Select(keyLight => new PluginActionParameter(keyLight.Key, keyLight.Value.Name, string.Empty))
                 .ToArray();
+
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            var (address, light) = _plugin.GetKeyLight(actionParameter);
+            if (address is null || light is null)
+                return null;
+
+            var temperature = light.Temperature;
+            if (temperature is null)
+                return null;
+
+            //Range: 143, 344
+            using (var bitmapBuilder = new BitmapBuilder(imageSize))
+            {
+                var path = "Loupedeck.KeyLightPlugin.Resources.KeyLight.temperature075-50.png";
+                if (temperature <= 300)
+                    path = "Loupedeck.KeyLightPlugin.Resources.KeyLight.temperature050-50.png";
+                if (temperature <= 225)
+                    path = "Loupedeck.KeyLightPlugin.Resources.KeyLight.temperature025-50.png";
+                if (temperature <= 180)
+                    path = "Loupedeck.KeyLightPlugin.Resources.KeyLight.temperature010-50.png";
+
+                var background = EmbeddedResources.ReadImage(path);
+                bitmapBuilder.Translate(0, -6);
+                bitmapBuilder.SetBackgroundImage(background);
+                bitmapBuilder.Translate(0, 6);
+
+                bitmapBuilder.Translate(0, 18);
+                bitmapBuilder.DrawText("temp", BitmapColor.White, 10);
+
+                return bitmapBuilder.ToImage();
+            }
+        }
     }
 }

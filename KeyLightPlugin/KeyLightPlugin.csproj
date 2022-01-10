@@ -118,6 +118,11 @@
     <EmbeddedResource Include="Resources\KeyLight\brightness015-50.png" />
     <EmbeddedResource Include="Resources\KeyLight\brightness030-50.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\KeyLight\temperature010-50.png" />
+    <EmbeddedResource Include="Resources\KeyLight\temperature025-50.png" />
+    <EmbeddedResource Include="Resources\KeyLight\temperature050-50.png" />
+    <EmbeddedResource Include="Resources\KeyLight\temperature075-50.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

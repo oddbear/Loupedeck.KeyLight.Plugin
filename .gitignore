@@ -311,4 +311,5 @@ testem.log
 *.DotSettings
 
 # Affinity Photo
-*.afphoto
+/Resources/*.afphoto
+/Resources/*.svg
