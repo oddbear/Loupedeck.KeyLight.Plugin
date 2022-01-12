@@ -1,4 +1,7 @@
-﻿namespace Loupedeck.KeyLightPlugin.Helpers
+﻿using System;
+using System.Linq;
+
+namespace Loupedeck.KeyLightPlugin.Helpers
 {
     public static class RangeHelper
     {
@@ -12,18 +15,45 @@
 
             return value;
         }
-
+        
         public static int ToKelvin(int index)
         {
+            index = Range(index, 143, 344);
             index -= 143;
-            
-            if (index < 0) index = 0;
-            if (index > 201) index = 201;
 
             return _lookupTable[index];
         }
 
-        private static readonly int[] _lookupTable = new int[]
+        public static int NextTemperatureIndex(int value, int ticks)
+        {
+            var currentKelvin = ToKelvin(value);
+            var nextValue = value + ticks;
+
+            if (ticks < 0)
+            {
+                for (var i = nextValue; i > 143; i--)
+                {
+                    var nextKelvin = ToKelvin(i);
+                    if (nextKelvin > currentKelvin)
+                        return i;
+                }
+
+                return 143;
+            }
+            else
+            {
+                for (var i = nextValue; i < 344; i++)
+                {
+                    var nextKelvin = ToKelvin(i);
+                    if (nextKelvin < currentKelvin)
+                        return i;
+                }
+
+                return 344;
+            }
+        }
+
+        private static readonly int[] _lookupTable =
         {
             7000, 6950, 6900, 6850, 6800, 6750, 6700, 6650, 6600, 6600, 6550, 6500,
             6450, 6400, 6350, 6350, 6300, 6250, 6200, 6150, 6150, 6100, 6050, 6000,

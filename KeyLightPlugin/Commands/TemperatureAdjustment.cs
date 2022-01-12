@@ -49,7 +49,10 @@ namespace Loupedeck.KeyLightPlugin.Commands
 
                 //Current: 278
                 //Control Center: Min 7000K (143), Max 2900K (344)
-                var temperature = RangeHelper.Range(light.Temperature.Value + ticks, 143, 344);
+                var currentValue = light.Temperature.Value;
+                var index = RangeHelper.NextTemperatureIndex(currentValue, ticks);
+                
+                var temperature = RangeHelper.Range(index, 143, 344);
                 light.Temperature = temperature;
                 
                 base.ActionImageChanged(actionParameter);
