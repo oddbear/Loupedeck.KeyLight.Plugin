@@ -12,7 +12,7 @@ namespace Loupedeck.KeyLightPlugin.Commands
         private KeyLightService _keyLightService;
 
         public TemperatureAdjustment()
-            : base(false)
+            : base(true)
         {
             base.DisplayName = "Adjust temperature";
             base.GroupName = "";

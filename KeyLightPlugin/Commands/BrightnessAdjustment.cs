@@ -13,7 +13,7 @@ namespace Loupedeck.KeyLightPlugin.Commands
         private KeyLightService _keyLightService;
 
         public BrightnessAdjustment()
-            : base(false)
+            : base(true)
         {
             base.DisplayName = "Adjust brightness";
             base.GroupName = "";
