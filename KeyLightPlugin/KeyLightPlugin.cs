@@ -33,13 +33,26 @@ namespace Loupedeck.KeyLightPlugin
             KeyLightService = new KeyLightService(_httpClient);
 
             _multicastService = new MulticastService();
+            _multicastService.NetworkInterfaceDiscovered += MulticastServiceOnNetworkInterfaceDiscovered;
             _multicastService.AnswerReceived += MulticastServiceOnAnswerReceived;
+        }
+
+        private void MulticastServiceOnNetworkInterfaceDiscovered(object sender, NetworkInterfaceEventArgs e)
+        {
+            if (sender is MulticastService multicastService)
+                multicastService.SendQuery("_elg._tcp.local.");
         }
 
         public override void Load()
         {
             LoadPluginIcons();
             _multicastService.Start();
+
+            //TODO: Remove?
+            //var service = "_elg._tcp.local.";
+            //var query = new Message();
+            //query.Questions.Add(new Question { Name = service, Type = DnsType.ANY });
+            //var response = _multicastService.ResolveAsync(query, CancellationToken.None).GetAwaiter().GetResult();
         }
 
         public override void Unload()
