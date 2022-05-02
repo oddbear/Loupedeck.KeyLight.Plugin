@@ -47,12 +47,16 @@ namespace Loupedeck.KeyLightPlugin
                 {
                     //Query once a second for new lights:
                     _multicastService.SendQuery("_elg._tcp.local.");
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                }
+                catch (ThreadInterruptedException)
+                {
+                    return;
                 }
                 catch
                 {
                     //
                 }
-                Thread.Sleep(TimeSpan.FromSeconds(1));
             }
         }
         
