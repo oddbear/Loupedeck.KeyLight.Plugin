@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace Loupedeck.KeyLightPlugin.Helpers
+﻿namespace Loupedeck.KeyLightPlugin.Helpers
 {
     public static class RangeHelper
     {

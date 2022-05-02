@@ -16,6 +16,7 @@ namespace Loupedeck.KeyLightPlugin
     {
         private readonly HttpClient _httpClient;
         private readonly MulticastService _multicastService;
+        private readonly Thread _discoveryThread;
 
         public KeyLightService KeyLightService { get; }
         public Dictionary<string, DiscoveredKeyLight> KeyLights { get; } = new Dictionary<string, DiscoveredKeyLight>();
@@ -34,17 +35,38 @@ namespace Loupedeck.KeyLightPlugin
 
             _multicastService = new MulticastService();
             _multicastService.AnswerReceived += MulticastServiceOnAnswerReceived;
+
+            _discoveryThread = new Thread(DiscoveryThread) {IsBackground = true};
         }
 
+        private void DiscoveryThread()
+        {
+            while (true)
+            {
+                try
+                {
+                    //Query once a second for new lights:
+                    _multicastService.SendQuery("_elg._tcp.local.");
+                }
+                catch
+                {
+                    //
+                }
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
+        }
+        
         public override void Load()
         {
             LoadPluginIcons();
             _multicastService.Start();
+            _discoveryThread.Start();
         }
 
         public override void Unload()
         {
             _multicastService.Dispose();
+            _discoveryThread.Interrupt();
             _httpClient.Dispose();
         }
         
@@ -67,7 +89,8 @@ namespace Loupedeck.KeyLightPlugin
 
                 if (string.IsNullOrWhiteSpace(dnsName))
                     return;
-
+                
+                //Light found, check if it's a new one or existing one:
                 if (!KeyLights.TryGetValue(dnsName, out var keyLight))
                     KeyLights[dnsName] = keyLight = new DiscoveredKeyLight { Id = dnsName };
                 
@@ -95,7 +118,6 @@ namespace Loupedeck.KeyLightPlugin
             catch (Exception exception)
             {
                 Console.WriteLine(exception);
-                throw;
             }
         }
 
