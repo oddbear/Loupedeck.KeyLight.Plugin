@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -17,9 +17,9 @@ namespace Loupedeck.KeyLightPlugin
         private readonly HttpClient _httpClient;
         private readonly MulticastService _multicastService;
         private readonly Thread _discoveryThread;
-
+        
         public KeyLightService KeyLightService { get; }
-        public Dictionary<string, DiscoveredKeyLight> KeyLights { get; } = new Dictionary<string, DiscoveredKeyLight>();
+        public ConcurrentDictionary<string, DiscoveredKeyLight> KeyLights { get; } = new ConcurrentDictionary<string, DiscoveredKeyLight>();
 
         public event EventHandler<StateUpdatedEventArgs> StateUpdatedEvents;
         public event EventHandler<BrightnessUpdatedEventArgs> BrightnessUpdatedEvents;
@@ -49,13 +49,13 @@ namespace Loupedeck.KeyLightPlugin
                     _multicastService.SendQuery("_elg._tcp.local.");
                     Thread.Sleep(TimeSpan.FromSeconds(1));
                 }
-                catch (ThreadInterruptedException)
+                catch (ThreadInterruptedException exception)
                 {
                     return;
                 }
-                catch
+                catch (Exception exception)
                 {
-                    //
+                    continue;
                 }
             }
         }
@@ -166,9 +166,9 @@ namespace Loupedeck.KeyLightPlugin
 
                 return (value.Address, light);
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                Console.WriteLine(e);
+                Console.WriteLine(exception);
                 return default;
             }
         }
